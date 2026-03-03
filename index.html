@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="pt-BR">
+   <head>
+      <meta charset="UTF-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1" />
+      <title>data-handlers — Documentação</title>
+      <meta
+         name="description"
+         content="Biblioteca de normalização e validação de dados para Node.js — zero dependências, suporte nacional, TypeScript."
+      />
+      <link rel="preconnect" href="https://fonts.googleapis.com" />
+      <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+      <link rel="stylesheet" href="docs/assets/style.css" />
+   </head>
+   <body>
+      <header class="site-header">
+         <a href="#intro" class="logo"><em>data-handlers</em></a>
+         <span class="ver-badge">v1.x</span>
+         <div class="header-right">
+            <a
+               class="header-link"
+               href="https://www.npmjs.com/package/data-handlers"
+               target="_blank"
+               rel="noopener"
+               title="npm"
+            >
+               <svg
+                  width="13"
+                  height="13"
+                  viewBox="0 0 18 7"
+                  fill="currentColor"
+               >
+                  <path
+                     d="M0 0h18v6H9V7H5V6H0V0zm1 5h2V1H1v4zm3-4v5h2V5h2V1H4zm5 0v4h2V1h-2zm3 0v4h4V1h-4zm1 1h2v2h-2V2z"
+                  />
+               </svg>
+               npm
+            </a>
+            <a
+               class="header-link"
+               href="https://github.com/lumaxs/data-handlers"
+               target="_blank"
+               rel="noopener"
+               title="GitHub"
+            >
+               <svg
+                  width="13"
+                  height="13"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+               >
+                  <path
+                     d="M12 0C5.37 0 0 5.37 0 12c0 5.3 3.44 9.8 8.2 11.38.6.11.82-.26.82-.58v-2.03c-3.34.73-4.04-1.61-4.04-1.61-.54-1.38-1.33-1.74-1.33-1.74-1.09-.74.08-.73.08-.73 1.2.08 1.84 1.24 1.84 1.24 1.07 1.83 2.8 1.3 3.49 1 .11-.78.42-1.3.76-1.6-2.67-.3-5.47-1.33-5.47-5.93 0-1.31.47-2.38 1.24-3.22-.13-.3-.54-1.52.12-3.18 0 0 1.01-.32 3.3 1.23a11.5 11.5 0 0 1 3-.4c1.02 0 2.04.13 3 .4 2.29-1.55 3.3-1.23 3.3-1.23.66 1.66.25 2.88.12 3.18.77.84 1.24 1.91 1.24 3.22 0 4.61-2.81 5.63-5.48 5.92.43.37.81 1.1.81 2.22v3.29c0 .32.22.7.83.58A12.01 12.01 0 0 0 24 12C24 5.37 18.63 0 12 0z"
+                  />
+               </svg>
+               GitHub
+            </a>
+            <button
+               class="theme-toggle"
+               id="theme-toggle"
+               aria-label="Alternar tema"
+               title="Alternar tema"
+            ></button>
+            <button class="nav-toggle" id="nav-toggle" aria-label="Menu">
+               ☰
+            </button>
+         </div>
+      </header>
+
+      <div class="nav-overlay" id="nav-overlay"></div>
+
+      <div class="layout">
+         <nav class="site-nav" id="site-nav">
+            <div class="nav-section">Início</div>
+            <a data-page="intro">Visão geral</a>
+            <a data-page="intro" data-anchor="install">Instalação</a>
+            <a data-page="intro" data-anchor="conceito">Conceito central</a>
+
+            <div class="nav-section">Funções base</div>
+            <a data-page="normalize">normalize()</a>
+            <a data-page="validate">validate()</a>
+
+            <div class="nav-section">handlers proxy</div>
+            <a data-page="handlers">Uso fluente</a>
+            <a data-page="handlers" data-anchor="introspect">Introspecção</a>
+
+            <div class="nav-section">Handlers do core</div>
+            <a data-page="handlers" data-anchor="name">name</a>
+            <a data-page="handlers" data-anchor="number">number</a>
+            <a data-page="handlers" data-anchor="date">date</a>
+            <a data-page="handlers" data-anchor="password">password</a>
+            <a data-page="handlers" data-anchor="url">url</a>
+            <a data-page="handlers" data-anchor="uuid">uuid</a>
+            <a data-page="handlers" data-anchor="any">any</a>
+
+            <div class="nav-section">Plugins nacionais</div>
+            <a data-page="plugins">Visão geral</a>
+            <a data-page="plugins" data-anchor="cpf">cpf</a>
+            <a data-page="plugins" data-anchor="cnpj">cnpj</a>
+            <a data-page="plugins" data-anchor="cep">cep</a>
+            <a data-page="plugins" data-anchor="phone">phone</a>
+            <a data-page="plugins" data-anchor="rg">rg</a>
+            <a data-page="plugins" data-anchor="slug">slug</a>
+            <a data-page="plugins" data-anchor="email">email</a>
+            <a data-page="plugins" data-anchor="color">color</a>
+
+            <div class="nav-section">Schemas</div>
+            <a data-page="schema">Introdução</a>
+            <a data-page="schema" data-anchor="parse">parse e safeParse</a>
+            <a data-page="schema" data-anchor="campos">Opções de campo</a>
+            <a data-page="schema" data-anchor="utils">Utilitários</a>
+            <a data-page="schema" data-anchor="error">SchemaError</a>
+
+            <div class="nav-section">Extensões</div>
+            <a data-page="handlers" data-anchor="register">register()</a>
+            <a data-page="handlers" data-anchor="aliases">registerAliases()</a>
+            <a data-page="handlers" data-anchor="plugin">createPlugin()</a>
+
+            <div class="nav-section">Padrões reais</div>
+            <a data-page="intro" data-anchor="pattern-api">Endpoint REST</a>
+            <a data-page="intro" data-anchor="pattern-form">Formulário</a>
+            <a data-page="intro" data-anchor="pattern-display">Exibição</a>
+            <a data-page="intro" data-anchor="pattern-patch">PATCH parcial</a>
+
+            <div class="nav-section">serve</div>
+            <a data-page="serve">Visão geral</a>
+            <a data-page="serve" data-anchor="options">ServeOptions</a>
+            <a data-page="serve" data-anchor="routes">Rotas</a>
+            <a data-page="serve" data-anchor="system">systemResponses</a>
+            <a data-page="serve" data-anchor="middleware">Middleware</a>
+            <a data-page="serve" data-anchor="ratelimit">Rate limit</a>
+            <a data-page="serve" data-anchor="auth">Auth</a>
+            <a data-page="serve" data-anchor="websocket">WebSocket</a>
+            <a data-page="serve" data-anchor="typescript">TypeScript</a>
+
+            <div class="nav-section">Referência</div>
+            <a data-page="cheatsheet">Cheatsheet</a>
+         </nav>
+
+         <main class="site-main" id="page-content">
+            <div class="page-loading">Carregando</div>
+         </main>
+      </div>
+
+      <footer class="site-footer">
+         <div class="footer-left">
+            <strong>data-handlers</strong> &nbsp;·&nbsp; &copy; 2026
+            <a
+               href="https://github.com/lumaxs"
+               target="_blank"
+               rel="noopener"
+               style="color: var(--text-3); text-decoration: none"
+               >lumaxs</a
+            >
+            &nbsp;·&nbsp; MIT License
+         </div>
+         <div class="footer-links">
+            <a
+               href="https://www.npmjs.com/package/data-handlers"
+               target="_blank"
+               rel="noopener"
+               >npm</a
+            >
+            <a
+               href="https://github.com/lumaxs/data-handlers"
+               target="_blank"
+               rel="noopener"
+               >GitHub</a
+            >
+            <a
+               href="https://github.com/lumaxs/data-handlers/blob/main/README.md"
+               target="_blank"
+               rel="noopener"
+               >README</a
+            >
+            <a
+               href="https://github.com/lumaxs/data-handlers/issues"
+               target="_blank"
+               rel="noopener"
+               >Issues</a
+            >
+         </div>
+      </footer>
+
+      <script src="docs/assets/app.js"></script>
+   </body>
+</html>

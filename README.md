@@ -4,45 +4,28 @@
 
 # data-handlers
 
-> Extensible normalization and validation library with pluggable handlers for names, numbers, dates, and more.
+> Zero-dependency normalization and validation library with pluggable handlers — built for the Brazilian market, designed for everyone.
 
-[![npm version](https://img.shields.io/npm/v/data-handlers)](https://www.npmjs.com/package/data-handlers)
+[![npm](https://img.shields.io/npm/v/data-handlers)](https://www.npmjs.com/package/data-handlers)
 [![license](https://img.shields.io/npm/l/data-handlers)](./LICENSE)
-[![node](https://img.shields.io/node/v/data-handlers)](https://nodejs.org)
+[![node](https://img.shields.io/node/v/data-handlers)](./package.json)
+
+📦 [npmjs.com](https://www.npmjs.com/package/data-handlers) · 📖 [Documentation](https://lumaxs.github.io/data-handlers/)
 
 ---
 
-## Overview
+## Features
 
-**data-handlers** provides a unified interface to **format** and **validate** common data types. It ships with three built-in handlers — `name`, `number`, and `date` — plus four official plugins: `cpfHandler`, `cnpjHandler`, `phoneHandler`, and `cepHandler`. The library was designed from the ground up to be extensible via additional plugins.
-
-The `register()` function (or its semantic alias `createPlugin()`) lets you add any custom type to the ecosystem: CPF, CNPJ, ZIP codes, phone numbers, slugs, and whatever else you need.
-
-All built-in formatting is powered by the native [Intl](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl) API, with zero external dependencies.
-
----
-
-## Plugin Ecosystem
-
-**data-handlers** key advantage over other validation libraries is its support for **official plugins targeting the Brazilian market**, which libraries like Zod completely ignore.
-
-```
-data-handlers           → core (normalize, validate, register, createPlugin)
-data-handlers-cpf       → CPF validation and formatting
-data-handlers-cnpj      → CNPJ validation and formatting
-data-handlers-phone     → Brazilian phone number formatting
-data-handlers-cep       → ZIP code formatting and lookup
-```
-
-> These plugins are now included in the core and ready to use.
-
----
-
-## Requirements
-
-- Node.js `>= 18`
-- ESM-only (`"type": "module"`)
-- TypeScript: types included via `index.d.ts`
+- **Zero dependencies** — pure JS, only native APIs (`Intl`, `Map`, `Proxy`)
+- **Core handlers** — name, number, date, password, url, uuid, any
+- **Brazilian plugins** — CPF, CNPJ, CEP, phone, RG, slug, email, color
+- **Schema system** — validate and normalize entire objects, à la Zod
+- **Fluent proxy** — `handlers.cpf.parse(...)`, `handlers.name.safe(...)`
+- **Zod-style aliases** — `.parse()` and `.safe()` on every type
+- **Introspection** — `handlers.has('cpf')`, `handlers.types`, `handlers.$`
+- **Extensible** — `register()`, `registerAliases()`, `createPlugin()`
+- **Case-insensitive** — `handlers.Name` === `handlers.name` (by design)
+- **Full TypeScript** — `.d.ts` with JSDoc autocomplete for JS too
 
 ---
 
@@ -50,295 +33,283 @@ data-handlers-cep       → ZIP code formatting and lookup
 
 ```bash
 npm install data-handlers
+# or
+pnpm add data-handlers
 ```
 
 ---
 
-## API
-
-### `normalize({ type, value, options? })`
-
-Normalizes and formats a value using the handler registered for the given type. **Throws** `TypeError` if the type is unknown or the value fails validation.
+## Quick start
 
 ```js
-import { normalize } from 'data-handlers'
+import { handlers, schema } from 'data-handlers'
 
-normalize({ type: 'name', value: '  john   doe  ' })
-// → 'John Doe'
+// Core handlers
+handlers.name.normalize('  emerson   ribeiro  ') // 'Emerson Ribeiro'
+handlers.number.normalize(1234.5, { style: 'currency', currency: 'BRL' }) // 'R$ 1.234,50'
+handlers.date.normalize(new Date(), { dateStyle: 'long', locale: 'pt-BR' }) // '5 de março de 2026'
+handlers.password.normalize('Senha@123') // 'Senha@123' (validated)
+handlers.url.normalize('HTTPS://EXAMPLE.COM/api') // 'https://example.com/api'
+handlers.uuid.normalize('550E8400-E29B-41D4-A716-446655440000') // lowercase
 
-normalize({ type: 'number', value: 1234567.89, options: { locale: 'pt-BR', style: 'currency', currency: 'BRL' } })
-// → 'R$ 1.234.567,89'
+// Brazilian plugins
+handlers.cpf.normalize('11144477735') // '111.444.777-35'
+handlers.phone.normalize('11987654321') // '(11) 98765-4321'
+handlers.email.normalize('  User@SITE.COM  ') // 'user@site.com'
+handlers.cep.normalize('01310100') // '01310-100'
 
-normalize({ type: 'date', value: '2024-01-15', options: { locale: 'pt-BR', dateStyle: 'long' } })
-// → '15 de janeiro de 2024'
+// Safe validation — never throws
+handlers.cpf.safe('000.000.000-00')
+// { valid: false, value: null, error: '[normalize:cpf] ...' }
 ```
 
 ---
 
-### `validate({ type, value, options? })`
+## Introspection
 
-Same logic as `normalize()`, but **never throws**. Returns an object with `valid`, `value`, and `error` — ideal for form validation.
+The full list of registered types is always available at runtime — no need to check the docs for every new handler or plugin:
 
 ```js
-import { validate } from 'data-handlers'
-
-validate({ type: 'name', value: '  john doe  ' })
-// → { valid: true, value: 'John Doe', error: null }
-
-validate({ type: 'name', value: '' })
-// → { valid: false, value: null, error: '[normalize:name] Expected non-empty string. Received: ' }
-
-validate({ type: 'number', value: NaN })
-// → { valid: false, value: null, error: '[normalize:number] Expected finite number. Received: NaN' }
+handlers.types // ['name', 'number', 'date', 'password', 'url', 'uuid', 'any', 'cpf', ...]
+handlers.has('cpf') // true
+handlers.$.types // meta namespace, same as handlers.types
 ```
 
 ---
 
-### `register(type, handler)`
+## Accessor API
 
-Registers a custom handler for any type. Overwrites the existing handler if the type is already registered.
+Each `handlers.<type>` exposes four methods:
 
-| Parameter | Type       | Description                                               |
-|-----------|------------|-----------------------------------------------------------|
-| `type`    | `string`   | Type identifier — case-insensitive and whitespace-trimmed |
-| `handler` | `Function` | `(value: any, options?: any) => string`                   |
-
-**Throws** `TypeError` if `handler` is not a function.
+| Method                | Behaviour                                       |
+| --------------------- | ----------------------------------------------- |
+| `.normalize(v, opts)` | Normalizes; throws if invalid                   |
+| `.validate(v, opts)`  | Never throws; returns `{ valid, value, error }` |
+| `.parse(v, opts)`     | Alias for `.normalize` (Zod-style)              |
+| `.safe(v, opts)`      | Alias for `.validate` (Zod-style)               |
 
 ---
 
-### `createPlugin(type, handler)`
-
-Semantic alias for `register()`. Use this when **publishing a plugin** package under `data-handlers-*`.
+## Schema system
 
 ```js
-// data-handlers-slug/index.js
-import { createPlugin } from 'data-handlers'
+import { schema } from 'data-handlers'
 
-const slugHandler = (value) => {
-    if (typeof value !== 'string' || !value.trim()) {
-        throw new TypeError(`[normalize:slug] Expected non-empty string. Received: ${value}`)
-    }
+const userSchema = schema({
+    name:     'name',
+    email:    'email',
+    phone:    { type: 'phone', optional: true },
+    document: 'cpf',
+    password: 'password',
+    website:  { type: 'url', optional: true },
+    tag:      'any',  // passes any non-null value as-is
+})
 
-    return value
-        .trim()
-        .toLowerCase()
-        .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '')
-        .replace(/\s+/g, '-')
-        .replace(/[^a-z0-9-]/g, '')
-        .replace(/-+/g, '-')
-        .replace(/^-|-$/g, '')
-}
+// parse — throws SchemaError with .errors map if invalid
+userSchema.parse({ name: 'JOAO SILVA', email: 'joao@example.com', ... })
 
-createPlugin('slug', slugHandler)
+// safeParse — never throws
+const result = userSchema.safeParse(req.body)
+if (!result.success) return res.status(400).json({ errors: result.errors })
+await db.users.create(result.data) // already normalized
+
+// Schema utilities (immutable — always return new schemas)
+userSchema.partial()                    // all fields optional
+userSchema.pick('name', 'email')        // only these fields
+userSchema.omit('password')             // exclude field
+userSchema.extend({ rg: 'rg' })         // add fields
 ```
+
+### Field options
 
 ```js
-// usage
-import { normalize } from 'data-handlers'
-import 'data-handlers-slug'
-
-normalize({ type: 'slug', value: 'Olá Mundo Legal!' })
-// → 'ola-mundo-legal'
+schema({
+    name: 'name',                   // short form
+    phone: {
+        type:     'phone',
+        optional: true,             // null/undefined accepted without error
+        default:  '11999999999',    // value used when field is undefined
+        options:  { ... },          // passed to the handler
+        label:    'Phone number',   // readable label in error messages
+    },
+    score: {
+        type:    'any',
+        options: { demandType: 'number' }, // only numbers accepted
+    },
+})
 ```
-
-> **Tip:** Import plugins before calling `normalize()` so the `createPlugin()` side-effect runs first.
 
 ---
 
-## Built-in Handlers
+## Core handlers
 
 ### `name`
 
-Normalizes a full name string to **Title Case**, trimming and collapsing extra whitespace.
-
-```js
-normalize({ type: 'name', value: '   joão   da   silva   ' })
-// → 'João Da Silva'
-```
-
-**Throws** `TypeError` if `value` is not a non-empty string.
-
----
+Title Case with pt-BR connectives (`de`, `da`, `do`, `das`, `dos`, `e`) and English ones (`of`, `the`, `and`) kept lowercase unless first token.
 
 ### `number`
 
-Formats a finite number into a locale-aware string via [`Intl.NumberFormat`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl/NumberFormat).
-
-| Option    | Type     | Default   | Description                    |
-|-----------|----------|-----------|--------------------------------|
-| `locale`  | `string` | `'en-US'` | BCP 47 language tag            |
-| `...rest` | `any`    | —         | Any `Intl.NumberFormatOptions` |
-
-```js
-normalize({ type: 'number', value: 1234567.89, options: { locale: 'pt-BR' } })
-// → '1.234.567,89'
-
-normalize({ type: 'number', value: 42, options: { locale: 'en-US', style: 'currency', currency: 'USD' } })
-// → '$42.00'
-
-normalize({ type: 'number', value: 0.753, options: { style: 'percent', maximumFractionDigits: 1 } })
-// → '75.3%'
-```
-
-**Throws** `TypeError` if `value` is not a finite number.
-
----
+Delegates to `Intl.NumberFormat`. Default locale: `pt-BR`. Throws `TypeError` for non-numbers, `RangeError` for `NaN`/`Infinity`.
 
 ### `date`
 
-Formats a date value into a locale-aware string via [`Intl.DateTimeFormat`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl/DateTimeFormat). Accepts a `Date` object, an ISO string, or any value parseable by the `Date` constructor.
+Delegates to `Intl.DateTimeFormat`. Accepts `Date`, ISO strings, and numeric timestamps (ms). Default locale: `pt-BR`.
 
-| Option    | Type     | Default   | Description                      |
-|-----------|----------|-----------|----------------------------------|
-| `locale`  | `string` | `'en-US'` | BCP 47 language tag              |
-| `...rest` | `any`    | —         | Any `Intl.DateTimeFormatOptions` |
+### `password`
+
+Validates a password. All rules are configurable via options:
 
 ```js
-normalize({ type: 'date', value: new Date(2026, 2, 1), options: { locale: 'pt-BR' } })
-// → '01/03/2026'
+handlers.password.normalize('Senha@123')
+// default: minLength 8, requireUppercase, requireLowercase, requireSpecial
 
-normalize({ type: 'date', value: new Date(2026, 2, 1), options: { locale: 'pt-BR', year: 'numeric', month: 'long', day: 'numeric' } })
-// → '1 de março de 2026'
-
-normalize({ type: 'date', value: '2024-01-15', options: { locale: 'en-US', dateStyle: 'long' } })
-// → 'January 15, 2024'
+handlers.password.normalize('SenhaSegura@1', {
+   minLength: 12,
+   requireNumber: true, // default: false
+   requireSpecial: true,
+   requireUppercase: true,
+   requireLowercase: true,
+})
 ```
 
-**Throws** `TypeError` if `value` cannot be parsed into a valid date.
+### `url`
+
+Validates and normalizes URLs. Lowercases the host, preserves path and query.
+
+```js
+handlers.url.normalize('HTTPS://EXAMPLE.COM/path') // 'https://example.com/path'
+handlers.url.normalize('ftp://x.com', { protocols: ['ftp'] }) // custom protocol
+```
+
+### `uuid`
+
+Validates UUID format. Supports v1, v3, v4, v5 and v7.
+
+```js
+handlers.uuid.normalize('550E8400-E29B-41D4-A716-446655440000')
+// '550e8400-e29b-41d4-a716-446655440000'
+
+handlers.uuid.normalize(id, { version: 4 }) // enforce v4
+handlers.uuid.normalize(id, { uppercase: true }) // return uppercase
+```
+
+### `any`
+
+Passes any non-null value through without normalizing. Useful in schemas for fields without a specific handler. Supports `demandType` to restrict the primitive type, and `transform` for inline validation or transformation logic.
+
+```js
+// Basic usage
+handlers.any.normalize('text') // 'text'
+handlers.any.normalize(42) // 42
+handlers.any.normalize(true) // true
+
+// demandType — restrict accepted primitive type
+handlers.any.normalize(42, { demandType: 'number' }) // 42
+handlers.any.safe('oi', { demandType: 'number' }) // { valid: false, ... }
+
+// transform — inline callback, runs after demandType
+handlers.any.normalize(150, {
+   demandType: 'number',
+   transform: v => Math.min(100, v), // clamp to 100
+}) // 100
+
+// transform can throw for custom validation
+handlers.any.normalize(value, {
+   transform: v => {
+      if (!Array.isArray(v))
+         throw new TypeError('[normalize:any] Expected array.')
+      return v.map(t => t.trim().toLowerCase())
+   },
+})
+
+// In a schema
+schema({
+   tag: 'any',
+   score: {
+      type: 'any',
+      options: {
+         demandType: 'number',
+         transform: v => Math.max(0, Math.min(100, v)),
+      },
+   },
+   tags: {
+      type: 'any',
+      options: {
+         transform: v => (Array.isArray(v) ? v.map(t => t.toLowerCase()) : [v]),
+      },
+   },
+   meta: { type: 'any', optional: true },
+})
+```
 
 ---
 
-## Building a Plugin
+## Brazilian plugins (included)
 
-A plugin is any module that imports `createPlugin` and registers a handler. The handler should **validate and format** the value — and throw a `TypeError` with a descriptive prefix if the value is invalid.
+All plugins load automatically when importing `data-handlers`. The table below covers the main ones — the full list is always available at runtime via `handlers.types`.
 
-```js
-// data-handlers-cpf (example implementation)
-import { createPlugin } from 'data-handlers'
-
-const isValidCPF = (cpf) => {
-    const digits = cpf.replace(/\D/g, '')
-    if (digits.length !== 11 || /^(\d)\1+$/.test(digits)) return false
-
-    const calc = (factor) =>
-        digits.slice(0, factor - 1).split('').reduce((sum, d, i) => sum + Number(d) * (factor - i), 0)
-
-    const mod = (n) => ((n * 10) % 11) % 10
-
-    return mod(calc(10)) === Number(digits[9]) && mod(calc(11)) === Number(digits[10])
-}
-
-const cpfHandler = (value) => {
-    const digits = String(value).replace(/\D/g, '')
-
-    if (!isValidCPF(digits)) {
-        throw new TypeError(`[normalize:cpf] Invalid CPF. Received: ${value}`)
-    }
-
-    return digits.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4')
-}
-
-createPlugin('cpf', cpfHandler)
-```
-
-```js
-import { normalize, validate } from 'data-handlers'
-
-normalize({ type: 'cpf', value: '11144477735' })
-// → '111.444.777-35'
-
-validate({ type: 'cpf', value: '00000000000' })
-// → { valid: false, value: null, error: '[normalize:cpf] Invalid CPF. Received: 00000000000' }
-```
+| Type    | Description                     |
+| ------- | ------------------------------- |
+| `cpf`   | Validates & formats CPF         |
+| `cnpj`  | Validates & formats CNPJ        |
+| `phone` | Formats Brazilian phone numbers |
+| `cep`   | Formats CEP                     |
+| `email` | Validates & normalizes email    |
+| `rg`    | Formats Brazilian RG            |
+| `slug`  | Generates URL-friendly slugs    |
+| `color` | Normalizes hex/rgb colors       |
 
 ---
 
-## Error Handling
-
-All handlers throw `TypeError` with a prefix that identifies the source:
-
-| Prefix               | Source            |
-|----------------------|-------------------|
-| `[normalize]`        | Core (`index.js`) |
-| `[normalize:name]`   | Name handler      |
-| `[normalize:number]` | Number handler    |
-| `[normalize:date]`   | Date handler      |
-| `[normalize:*]`      | External plugins  |
-
-Use `validate()` when you'd rather not deal with exceptions:
+## Custom registration
 
 ```js
-const { valid, value, error } = validate({ type: 'cpf', value: input })
+import { register, registerAliases, createPlugin } from 'data-handlers'
 
-if (!valid) {
-    console.error(error)
-}
+register('plate', value => {
+   const clean = String(value)
+      .toUpperCase()
+      .replace(/[^A-Z0-9]/g, '')
+   if (
+      !/^[A-Z]{3}[0-9]{4}$/.test(clean) &&
+      !/^[A-Z]{3}[0-9][A-Z][0-9]{2}$/.test(clean)
+   )
+      throw new TypeError(`[normalize:plate] Invalid plate: ${value}`)
+   return `${clean.slice(0, 3)}-${clean.slice(3)}`
+})
+
+registerAliases('name', 'nome', 'fullName')
+createPlugin('myType', myHandler) // semantic alias of register(), for npm packages
 ```
 
 ---
 
 ## TypeScript
 
-Types are included natively — no additional installation required.
+Written in JS with full `.d.ts` declarations. All types exported:
 
 ```ts
-import { normalize, validate, register, createPlugin } from 'data-handlers'
-import type { Handler, ValidateResult } from 'data-handlers'
-
-const slugHandler: Handler<string> = (value) => {
-    // ...
-    return slug
-}
-
-createPlugin('slug', slugHandler)
-
-const result: ValidateResult = validate({ type: 'slug', value: 'Hello World' })
+import type {
+   Handler,
+   TypeAccessor,
+   HandlersProxy,
+   ValidateResult,
+   Schema,
+   SchemaShape,
+   FieldConfig,
+   SchemaParseResult,
+   NameHandlerOptions,
+   NumberHandlerOptions,
+   DateHandlerOptions,
+   PasswordHandlerOptions,
+   UrlHandlerOptions,
+   UuidHandlerOptions,
+   AnyHandlerOptions,
+   SlugHandlerOptions,
+   ColorHandlerOptions,
+   RgHandlerOptions,
+} from 'data-handlers'
 ```
-
----
-
-## Project Structure
-
-```
-data-handlers
-├── handlers/
-│   ├── dateHandler.js     # Intl.DateTimeFormat wrapper
-│   ├── nameHandler.js     # Title Case normalizer
-│   └── numberHandler.js   # Intl.NumberFormat wrapper
-├── src/
-│   └── main.js            # Handler registry + formatType
-├── index.js               # Public API
-└── index.d.ts             # TypeScript types
-```
-
----
-
-## API Reference
-
-### `normalize(params)` / `validate(params)`
-
-| Parameter        | Type     | Required | Description                      |
-|------------------|----------|----------|----------------------------------|
-| `params.type`    | `string` | ✅        | Registered type identifier       |
-| `params.value`   | `any`    | ✅        | Value to process                 |
-| `params.options` | `object` | ❌        | Options forwarded to the handler |
-
-`normalize` → returns `string` or throws `TypeError`.
-`validate` → returns `{ valid, value, error }`, never throws.
-
----
-
-### `register(type, handler)` / `createPlugin(type, handler)`
-
-| Parameter | Type       | Required | Description                   |
-|-----------|------------|----------|-------------------------------|
-| `type`    | `string`   | ✅        | Type identifier to register   |
-| `handler` | `Function` | ✅        | `(value, options?) => string` |
-
-`register` → general use.
-`createPlugin` → semantic alias for plugin authors.
 
 ---
 

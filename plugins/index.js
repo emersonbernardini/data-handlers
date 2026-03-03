@@ -1,5 +1,0 @@
-import './data-handlers-cpf/index.js'
-import './data-handlers-cnpj/index.js'
-import './data-handlers-phone/index.js'
-import './data-handlers-cep/index.js'
-import './data-handlers-slug/index.js'
