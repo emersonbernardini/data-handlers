@@ -85,7 +85,6 @@ export class Schema {
             if (value === undefined && 'default' in field)
                 value = field.default;
             if ((value === undefined || value === null) && field.optional) {
-                data[key] = value ?? null;
                 continue;
             }
             if (value === undefined || value === null) {

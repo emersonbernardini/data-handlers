@@ -203,7 +203,7 @@ class Server {
     #openConnections = new Set();
     #openWebSockets = new Set();
     #shutdownOptions;
-    constructor({ port = 3000, host = '0.0.0.0', logger = false, routes = {}, middleware = [], fetch: fallback, error: errorHandler, auth, rateLimit, websocket, shutdown, } = {}) {
+    constructor({ port = 4000, host = '127.0.0.1', logger = false, routes = {}, middleware = [], fetch: fallback, error: errorHandler, auth, rateLimit, websocket, shutdown, } = {}) {
         this.#port = port;
         this.#host = host;
         this.#loggerOpts = this.#resolveLogger(logger);

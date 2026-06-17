@@ -73,7 +73,7 @@ describe('schema()', () => {
          })
          const r = s.safeParse({ name: 'joao' })
          expect(r.success).toBe(true)
-         expect(r.data?.phone).toBeNull()
+         expect(r.data?.phone).toBeUndefined()
       })
 
       it('campo com default usa valor padrão quando ausente', () => {
