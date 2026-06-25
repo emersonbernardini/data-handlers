@@ -225,18 +225,14 @@ class Server {
         this.#shutdownOptions = shutdown;
         this.#server = this.#createServer();
         // Registra sinais de OS se configurado
-        if (shutdown?.signals ?? ['SIGINT', 'SIGTERM']) {
-            const sigs = shutdown?.signals ?? ['SIGINT', 'SIGTERM'];
-            if (shutdown) {
-                for (const sig of sigs) {
-                    process.once(sig, () => {
-                        this.gracefulShutdown().catch(err => {
-                            console.error('[shutdown error]', err);
-                            process.exit(1);
-                        });
-                    });
-                }
-            }
+        const sigs = shutdown?.signals ?? ['SIGINT', 'SIGTERM'];
+        for (const sig of sigs) {
+            process.once(sig, () => {
+                this.gracefulShutdown().catch(err => {
+                    console.error('[shutdown error]', err);
+                    process.exit(1);
+                });
+            });
         }
     }
     // ── Logger resolver ─────────────────────────────────────────────────────────
